@@ -1,0 +1,875 @@
+/* =====================================================
+   DESIGN TOKENS
+   Palette: warm cream base, blush pink, soft lavender,
+   a deeper rose for text so contrast stays readable.
+   ===================================================== */
+:root {
+  --cream:        #FFF8F2;
+  --cream-deep:    #FCEFE6;
+  --blush:         #FFE0EC;
+  --rose:          #F3AEC6;
+  --rose-deep:     #D97FA0;
+  --lavender:      #E9DDF5;
+  --lavender-deep: #C9B3E8;
+  --ink:           #1F2937;
+  --ink-soft:      #374151;
+  --gold:          #E8C99B;
+  --mint:          #9BC98A;
+
+  --glass-bg:      rgba(255,255,255,0.82);
+  --glass-bg-deep: rgba(255,255,255,0.92);
+  --glass-border:  rgba(0,0,0,0.08);
+  --glass-shadow:  rgba(201, 122, 160, 0.18);
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Quicksand', -apple-system, sans-serif;
+
+  --radius-lg: 32px;
+  --radius-md: 20px;
+  --radius-full: 999px;
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: linear-gradient(160deg,#FFF8F3 0%,#FFD5E4 45%,#DDD0FF 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Comedic screen shake, triggered by JS on the slap button */
+body.shake { animation: bodyShake 0.45s var(--ease-soft); }
+@keyframes bodyShake {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  10% { transform: translate(-8px, 2px) rotate(-1deg); }
+  20% { transform: translate(7px, -3px) rotate(1deg); }
+  30% { transform: translate(-6px, 3px) rotate(-1deg); }
+  40% { transform: translate(6px, -2px) rotate(1deg); }
+  50% { transform: translate(-5px, 2px) rotate(-0.6deg); }
+  60% { transform: translate(4px, -2px) rotate(0.6deg); }
+  70% { transform: translate(-3px, 1px) rotate(-0.4deg); }
+  80% { transform: translate(3px, -1px) rotate(0.4deg); }
+  90% { transform: translate(-2px, 1px) rotate(0); }
+}
+
+/* Respect reduced motion preference across the whole page */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =====================================================
+   AMBIENT CANVAS + CURSOR GLOW
+   ===================================================== */
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(243, 174, 198, 0.16) 0%, rgba(233, 221, 245, 0.08) 45%, transparent 70%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.4s ease;
+  will-change: transform;
+}
+
+@media (hover: none) {
+  #cursor-glow { display: none; }
+}
+
+/* Full-screen flash for comedic "impact" moments */
+#screen-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(243,174,198,0.55));
+  opacity: 0;
+  pointer-events: none;
+}
+#screen-flash.flash { animation: flashPulse 0.35s ease-out; }
+@keyframes flashPulse {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* =====================================================
+   PRELOADER
+   ===================================================== */
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  background: linear-gradient(160deg, var(--cream) 0%, var(--blush) 60%, var(--lavender) 100%);
+  transition: opacity 0.8s var(--ease-soft), visibility 0.8s var(--ease-soft);
+}
+
+#preloader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-ring {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid rgba(217, 127, 160, 0.18);
+  border-top-color: var(--rose-deep);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loader-text {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.dots span { animation: blink 1.4s infinite; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+/* =====================================================
+   LAYOUT / SCREENS
+   ===================================================== */
+main#app {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  transition: transform 0.7s var(--ease-soft);
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(24px) scale(0.98);
+  transition: opacity 0.7s var(--ease-soft), transform 0.7s var(--ease-soft), visibility 0.7s;
+}
+
+.screen.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  position: relative;
+}
+
+/* =====================================================
+   GLASS CARD
+   ===================================================== */
+.glass-card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  padding: 48px 36px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(243,174,198,0.2), rgba(233,221,245,0.5));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* =====================================================
+   PHOTO FRAME (signature element: soft halo + drifting motion)
+   ===================================================== */
+.photo-frame {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  margin-bottom: 6px;
+  animation: floaty 5s ease-in-out infinite;
+}
+
+.photo-frame--large { width: 190px; height: 190px; }
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1.2deg); }
+}
+
+.photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+  border: 4px solid rgba(255,255,255,0.85);
+}
+
+.photo-placeholder {
+  display: none;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  border: 4px solid rgba(255,255,255,0.85);
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.4;
+  padding: 10px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.frame-glow {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(243,174,198,0.55) 0%, transparent 70%);
+  filter: blur(6px);
+  z-index: 1;
+  animation: glow-pulse 3.2s ease-in-out infinite;
+}
+
+.frame-glow--large { inset: -20px; }
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.08); }
+}
+
+/* Rotating halo ring of tiny sparkle dots — the page's signature detail */
+.frame-ring {
+  position: absolute;
+  inset: -22px;
+  z-index: 1;
+  animation: rotate-ring 14s linear infinite;
+}
+
+.frame-ring--large { inset: -28px; }
+
+.frame-ring::before,
+.frame-ring::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px 2px rgba(232, 201, 155, 0.7);
+}
+
+.frame-ring::before { top: 0; left: 50%; transform: translateX(-50%); }
+.frame-ring::after { bottom: 0; left: 50%; transform: translateX(-50%); background: var(--rose-deep); box-shadow: 0 0 8px 2px rgba(217,127,160,0.7); }
+
+@keyframes rotate-ring { to { transform: rotate(360deg); } }
+
+/* =====================================================
+   TYPOGRAPHY
+   ===================================================== */
+h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  color:#111827;
+  text-shadow:0 1px 2px rgba(255,255,255,.5);
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color:#374151;
+  font-weight:600;
+  font-size: 1.02rem;
+}
+
+.heart-accent { display: inline-block; animation: heartbeat 1.6s ease-in-out infinite; }
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.18); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+  60% { transform: scale(1); }
+}
+
+.q-eyebrow {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rose-deep);
+}
+
+.question-text {
+  color:#111827;
+  text-shadow:0 1px 1px rgba(255,255,255,.6);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 4.5vw, 1.85rem);
+  line-height: 1.35;
+  margin: 4px 0 10px;
+}
+
+.question-text em { color: var(--rose-deep); font-style: italic; }
+
+/* Fade-up entrance choreography */
+.fade-up {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: fadeUp 0.8s var(--ease-soft) forwards;
+}
+.delay-1 { animation-delay: 0.15s; }
+.delay-2 { animation-delay: 0.35s; }
+.delay-3 { animation-delay: 0.55s; }
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+.btn {
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 15px 34px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  transition: transform 0.35s var(--ease-soft), box-shadow 0.35s var(--ease-soft);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--lavender-deep);
+  outline-offset: 3px;
+}
+
+.btn-primary {
+  background:linear-gradient(135deg,#C0265D,#EC4899);
+  box-shadow: 0 10px 28px rgba(217, 127, 160, 0.4);
+}
+.btn-primary:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 34px rgba(217, 127, 160, 0.5); }
+.btn-primary:active { transform: translateY(-1px) scale(0.98); }
+
+.btn-secondary {
+  background: linear-gradient(135deg, var(--lavender-deep), var(--rose));
+  box-shadow: 0 10px 24px rgba(201, 179, 232, 0.42);
+  font-size: 0.92rem;
+  padding: 13px 26px;
+}
+.btn-secondary:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 30px rgba(201, 179, 232, 0.52); }
+.btn-secondary:active { transform: translateY(-1px) scale(0.97); }
+
+.btn-arrow { transition: transform 0.3s var(--ease-soft); }
+.btn-primary:hover .btn-arrow { transform: translateX(4px); }
+
+.btn-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  position: relative;
+  min-height: 56px;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-yes {
+  background:linear-gradient(135deg,#15803D,#22C55E);
+  box-shadow: 0 10px 26px rgba(139, 184, 122, 0.38);
+  transition: transform 0.3s var(--ease-soft), box-shadow 0.3s var(--ease-soft);
+}
+.btn-yes:hover { transform: scale(1.08); box-shadow: 0 14px 30px rgba(139, 184, 122, 0.48); }
+.btn-yes:active { transform: scale(0.96); }
+
+.btn-no {
+  background:linear-gradient(135deg,#C4B5FD,#A78BFA);
+  color: var(--ink);
+  position: relative;
+  z-index: 5;
+  /* runs away on hover/click — positioning handled via inline transform in JS */
+}
+
+/* Floating "nice try" text bursts spawned near evasive buttons */
+.escape-text {
+  position: fixed;
+  z-index: 30;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--rose-deep);
+  pointer-events: none;
+  animation: escapeFloat 1s ease-out forwards;
+}
+
+@keyframes escapeFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0.8); }
+  20% { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-38px) scale(1.05); }
+}
+
+/* Ripple effect on click */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  transform: scale(0);
+  animation: rippleAnim 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleAnim {
+  to { transform: scale(3); opacity: 0; }
+}
+
+/* =====================================================
+   PROGRESS TRACK
+   ===================================================== */
+.progress-track {
+  position: fixed;
+  top: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(280px, 70vw);
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.45);
+  z-index: 20;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.progress-track.visible { opacity: 1; }
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--rose-deep), var(--gold));
+  transition: width 0.6s var(--ease-soft);
+}
+
+/* =====================================================
+   QUIZ CARD ENTRANCE (bounce)
+   ===================================================== */
+.quiz-card {
+  animation: bounceIn 0.7s var(--ease-soft);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+  60% { transform: scale(1.02) translateY(-4px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); }
+}
+
+/* =====================================================
+   FINAL SCREEN
+   ===================================================== */
+.final-card { max-width: 560px; padding: 52px 40px 44px; gap: 22px; }
+
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Gentle stream of rising hearts behind the final card */
+.floating-hearts {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.floating-heart {
+  position: absolute;
+  bottom: -40px;
+  font-size: 1.4rem;
+  opacity: 0.85;
+  animation: heartRise linear forwards;
+  filter: drop-shadow(0 2px 6px rgba(217,127,160,0.35));
+}
+
+@keyframes heartRise {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(-115vh) translateX(var(--drift, 20px)) rotate(20deg); opacity: 0; }
+}
+
+.final-message {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.final-message p {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeUp 0.7s var(--ease-soft) forwards;
+}
+
+.final-message .emphasis {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--rose-deep);
+  font-size: 1.1rem;
+}
+
+.final-heart { font-size: 1.6rem; }
+
+.i-love-you {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 7vw, 3rem);
+  background: linear-gradient(120deg, var(--rose-deep), var(--gold), var(--lavender-deep), var(--rose-deep));
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+.i-love-you span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(16px) rotate(-4deg);
+  animation: letterPop 0.6s var(--ease-soft) forwards;
+}
+
+@keyframes letterPop {
+  to { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes shimmer {
+  to { background-position: 300% center; }
+}
+
+/* =====================================================
+   INTERACTIVE PLAY ZONE (slap + compliment generator)
+   ===================================================== */
+.interactive-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.slap-wrap, .proof-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  position: relative;
+  min-height: 56px;
+}
+
+.slap-counter {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--rose-deep);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.35s var(--ease-soft), transform 0.35s var(--ease-soft);
+}
+.slap-counter.show { opacity: 1; transform: translateY(0); }
+
+/* When the slap button starts dodging, it needs absolute positioning
+   inside its wrapper, same trick as the quiz "No" button */
+.hug-btn.evasive {
+  position: absolute;
+}
+
+.speech-bubble {
+  position: relative;
+  max-width: 340px;
+  background: var(--glass-bg-deep);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  box-shadow: 0 10px 30px var(--glass-shadow);
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity 0.4s var(--ease-soft), transform 0.4s var(--ease-soft);
+  pointer-events: none;
+}
+
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: var(--glass-bg-deep);
+  border-left: 1px solid var(--glass-border);
+  border-top: 1px solid var(--glass-border);
+}
+
+.speech-bubble.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Hand emoji that "flies" off after a slap click */
+.flying-hand {
+  position: fixed;
+  z-index: 260;
+  font-size: 1.8rem;
+  pointer-events: none;
+  animation: handFly 0.75s var(--ease-soft) forwards;
+}
+
+@keyframes handFly {
+  0% { transform: translate(0, 0) scale(0.6) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--hx), var(--hy)) scale(1.3) rotate(var(--hr)); opacity: 0; }
+}
+
+.hug-btn { margin-top: 4px; }
+.btn-icon { display: inline-block; }
+
+/* =====================================================
+   MUSIC PLAYER
+   ===================================================== */
+.music-player {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--glass-bg-deep);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: 10px 16px;
+}
+
+.music-toggle {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--rose-deep), var(--rose));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-soft);
+}
+.music-toggle:hover { transform: scale(1.08); }
+.music-toggle:active { transform: scale(0.94); }
+
+.music-info { flex: 1; text-align: left; }
+
+.music-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+.music-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: rgba(217, 127, 160, 0.18);
+  overflow: hidden;
+}
+
+.music-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--rose-deep), var(--gold));
+  border-radius: inherit;
+}
+
+/* =====================================================
+   HUG / SLAP OVERLAY
+   ===================================================== */
+#hug-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+#hug-overlay.active {
+  animation: hugZoom 1.4s var(--ease-soft);
+}
+
+@keyframes hugZoom {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+#hug-toast {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--rose-deep);
+  background: var(--glass-bg-deep);
+  border: 1px solid var(--glass-border);
+  padding: 16px 32px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 14px 40px var(--glass-shadow);
+  transform: scale(0.85);
+  opacity: 0;
+  text-align: center;
+  max-width: 88vw;
+}
+
+#hug-overlay.active #hug-toast {
+  animation: toastPop 1.4s var(--ease-soft);
+}
+
+@keyframes toastPop {
+  0% { transform: scale(0.7); opacity: 0; }
+  20% { transform: scale(1.05); opacity: 1; }
+  30% { transform: scale(1); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+
+#hug-sparkles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.hug-sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px 3px rgba(232, 201, 155, 0.8);
+  animation: sparkleBurst 1.2s ease-out forwards;
+}
+
+@keyframes sparkleBurst {
+  0% { transform: translate(0, 0) scale(0); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+
+/* Tiny sparkle burst on generic button clicks */
+.click-sparkle {
+  position: fixed;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rose-deep);
+  pointer-events: none;
+  z-index: 40;
+  animation: clickSparkle 0.6s ease-out forwards;
+}
+
+@keyframes clickSparkle {
+  to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+@media (max-width: 480px) {
+  .glass-card { padding: 38px 24px 32px; border-radius: var(--radius-md); }
+  .final-card { padding: 42px 24px 34px; }
+  .btn-row { flex-direction: row; flex-wrap: wrap; gap: 12px; }
+  .photo-frame { width: 124px; height: 124px; }
+  .photo-frame--large { width: 156px; height: 156px; }
+  .speech-bubble { max-width: 90vw; }
+}
+
+@media (max-width: 340px) {
+  .btn { padding: 13px 26px; font-size: 0.92rem; }
+  .btn-secondary { padding: 11px 20px; font-size: 0.85rem; }
+}

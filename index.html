@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>For My Bouni 🤍</title>
+
+<!-- Google Fonts: Playfair Display (elegant display serif) + Quicksand (soft rounded body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ======================= -->
+  <!-- CUSTOMIZATION SHORTCUTS -->
+  <!-- Replace these 3 things: -->
+  <!--  1. YOUR_GIRL_NAME  -> search & replace everywhere below -->
+  <!--  2. YOUR_IMAGE.jpg  -> the <img> src in #welcome-photo and #final-photo -->
+  <!--  3. YOUR_SONG.mp3   -> the <audio> source at the bottom -->
+  <!-- ======================= -->
+
+  <!-- Ambient canvas: soft floating glow particles, drawn behind everything -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Cursor glow that softly follows the mouse -->
+  <div id="cursor-glow"></div>
+
+  <!-- Screen flash for comedic impact moments (slap, etc) -->
+  <div id="screen-flash"></div>
+
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="loader-ring"></div>
+    <p class="loader-text">wrapping up something sweet<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+  </div>
+
+  <main id="app" aria-live="polite">
+
+    <!-- ===================== OPENING SECTION ===================== -->
+    <section class="screen active" id="screen-welcome">
+      <div class="glass-card welcome-card">
+
+        <div class="photo-frame" id="welcome-photo">
+          <img src="putki.jpg" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="photo-placeholder">
+            <!-- Replace this with your girlfriend's image -->
+            <span>Replace this with<br />your girlfriend's image</span>
+          </div>
+          <div class="frame-glow"></div>
+          <div class="frame-ring"></div>
+        </div>
+
+        <h1 class="fade-up delay-1">Hey putki <span class="heart-accent">😁😁</span></h1>
+        <p class="subtitle fade-up delay-2">I made a little game for you Lets play<span class="ellipsis">...</span></p>
+
+        <button class="btn btn-primary fade-up delay-3" id="start-btn">
+          <span>Start</span>
+          <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================== QUIZ PROGRESS ===================== -->
+    <div class="progress-track" id="progress-track" aria-hidden="true">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- ===================== QUESTION SCREENS ===================== -->
+    <section class="screen" id="screen-q1" data-question="1">
+      <div class="glass-card quiz-card">
+        <span class="q-eyebrow">Question 1 of 5</span>
+        <h2 class="question-text">Are you short <em>(Bouni)?</em> 🤭</h2>
+        <div class="btn-row">
+          <button class="btn btn-yes" data-next="screen-q2">Yes <span>😂</span></button>
+          <button class="btn btn-no" data-question-no>No <span>😤</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-q2" data-question="2">
+      <div class="glass-card quiz-card">
+        <span class="q-eyebrow">Question 2 of 4</span>
+        <h2 class="question-text">You are moti, Hippo , yes or no ? 🤭</h2>
+        <div class="btn-row">
+          <button class="btn btn-yes" data-next="screen-q3">Yes <span>😎</span></button>
+          <button class="btn btn-no" data-question-no>No <span>😤</span></button>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="screen" id="screen-q3" data-question="4">
+      <div class="glass-card quiz-card">
+        <span class="q-eyebrow">Question 3 of 4</span>
+        <h2 class="question-text">Are you look like badarni (sundari) ?</h2>
+        <div class="btn-row">
+          <button class="btn btn-yes" data-next="screen-q4">Yes <span>😎</span></button>
+          <button class="btn btn-no" data-question-no>No <span>😤</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-q4" data-question="5">
+      <div class="glass-card quiz-card">
+        <span class="q-eyebrow">Question 5 of 5</span>
+        <h2 class="question-text">Who is always right you or me ?</h2>
+        <div class="btn-row">
+          <button class="btn btn-yes" data-next="screen-final">You <span>😎</span></button>
+          <button class="btn btn-no" data-question-no>Me <span>😤</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-final">
+      <canvas id="confetti-canvas"></canvas>
+      <!-- <div class="floating-hearts" id="floating-hearts" aria-hidden="true"></div> -->
+
+      <div class="glass-card final-card">
+
+        <div class="photo-frame photo-frame--large" id="final-photo">
+          <img src="putki.jpg" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="photo-placeholder">
+          </div>
+          <div class="frame-glow frame-glow--large"></div>
+          <div class="frame-ring frame-ring--large"></div>
+        </div>
+
+        <div class="final-message" id="final-message">
+          <p>See&hellip;<br />You admitted everything 😌</p>
+          <p>Yes, you're tiny little bouni.<br />
+             Yes, you're moti , not Fat though😁.<br />
+              you're Sundari 🐒🐒.</p>
+          <p class="emphasis">And most importantly&hellip;</p>
+          <p>I am always smart, always right 😎😎 </p>
+          <p>Alxi , bihana dila uthnay manxay😃😃.</p>
+          <p>You Putki , i will  always call you with this name, always  ,<br />
+             annoy you🤣🤣,<br />
+          <p class="heart-accent final-heart">🐒🤣🤣</p>
+        </div>
+
+        <h2 class="i-love-you" id="i-love-you-text" aria-label="I Love You">
+          <span>Put</span><span>&nbsp;</span><span>-K</span><span>i</span><span>i</span><span>i</span><span>&nbsp;</span><span>Y</span><span>o</span><span>u</span>
+        </h2>
+
+        <!-- ===== INTERACTIVE PLAY ZONE ===== -->
+        <div class="interactive-zone">
+
+          <div class="slap-wrap">
+            <button class="btn btn-primary hug-btn" id="hug-btn">
+              <span id="hug-btn-label">Do you wanna slap Me</span>
+              <span class="btn-icon">🫷🫸</span>
+            </button>
+            <p class="slap-counter" id="slap-counter"></p>
+          </div>
+
+          <div class="proof-wrap">
+            <button class="btn btn-secondary" id="compliment-btn">
+              <span>Need more proof I'm right?</span>
+              <span class="btn-icon">🐒</span>
+            </button>
+            <div class="speech-bubble" id="speech-bubble"></div>
+          </div>
+
+        </div>
+
+        <!-- ===== MUSIC PLAYER ===== -->
+        <div class="music-player">
+          <button class="music-toggle" id="music-toggle" aria-label="Play song">
+            <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="pause-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+          </button>
+          <div class="music-info">
+            <span class="music-label">a little song for you</span>
+            <div class="music-bar">
+              <div class="music-bar-fill" id="music-bar-fill"></div>
+            </div>
+          </div>
+          <audio id="bg-audio" loop preload="none">
+            <!-- Replace music.mp3 with your song -->
+            <source src="bojpurisong.mp3" type="audio/mpeg" />
+          </audio>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Hug / slap overlay -->
+  <div id="hug-overlay">
+    <div id="hug-sparkles"></div>
+    <p id="hug-toast">You can't!! Don't try 🤣🤣</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
